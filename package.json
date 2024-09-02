@@ -1,0 +1,26 @@
+{
+  "name": "atra",
+  "version": "1.0.0",
+  "description": "atra is a bsky client that ",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "moch test/**/*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/robertarles/atra"
+  },
+  "keywords": [
+    "bsky",
+    "atproto"
+  ],
+  "author": "robert arles",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.13.5",
+    "@types/node": "^22.5.2"
+  }
+}

@@ -1,10 +1,11 @@
 {
   "name": "atra",
   "version": "1.0.0",
-  "description": "atra is a bsky client that ",
+  "description": "atra is a bsky client that, um.. mphraphrma bing bong. Good Luck!",
   "main": "dist/index.js",
   "scripts": {
-    "test": "moch test/**/*"
+    "build": "node_modules/.bin/tsc --build tsconfig.json";
+    "test": "mocha test/**/*"
   },
   "repository": {
     "type": "git",

@@ -4,25 +4,26 @@ import { inspect } from 'util';
 async function main() {
   // configure connection to the server, without account authentication
   const agent = new AtpAgent({
-    service: 'https://bsky.com',
+    service: 'https://at.arles.us',
     persistSession: (evt: AtpSessionEvent, sess?: AtpSessionData) => {
-      console.log(inspect(sess, { colors: true }))   // store the session-data for reuse
+      console.log(`[DEBUG] evt [${inspect(evt, { colors: true })}]`);
+      console.log(`[DEBUG] sess [${inspect(sess, { colors: true })}]`);   // store the session-data for reuse
     },
   })
 
-
-  // 2) if an existing session was securely stored previously, then reuse that to resume the session.
+  // 2) if an existing session was securely stored previously,pr then reuse that to resume the session.
   //await agent.resumeSession(savedSessionData)
 
   // 3) if no old session was available, create a new one by logging in with password (App Password)
+  if (process.env.ATRA_USERNAME === undefined || process.env.ATRA_PASSWORD === undefined) {
+    console.log("ATRA_USERNAME and ATRA_PASSWORD must be set");
+    process.exit(1);
+  }
+
   await agent.login({
     identifier: process.env.ATRA_USERNAME,
     password: process.env.ATRA_PASSWORD
   })
-
-  console.log(agent.did)
-  console.log(agent.accountDid) // Throws if the user is not authenticated
-
 
   // Feeds and content
   await agent.getTimeline()

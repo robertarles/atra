@@ -1,22 +1,30 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "target": "es2022",
+    //"esModuleInterop": true,
     "allowJs": true,
-    "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "module": ""
-    "noEmit": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    //"isolatedModules": true,
     // Include the DOM types
     "lib": [
       "es2022"
-    ]
+    ],
+    "module": "commonjs",
+    "moduleDetection": "force",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "resolveJsonModule": true,
+    "rootDir": "./src",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2020",
+    "types": ["node"],
+    //"verbatimModuleSyntax": true
   },
   // Include the necessary files for your project
   "include": [

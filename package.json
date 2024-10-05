@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@atproto/api": "^0.13.5",
-    "@types/node": "^22.5.2"
+    "@types/node": "^22.5.2",
+    "open": "^10.1.0"
   }
 }

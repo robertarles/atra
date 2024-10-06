@@ -1,4 +1,4 @@
-import { AtpAgent, AtpSessionEvent, AtpSessionData } from '@atproto/api';
+import { AtpAgent, AtpSessionEvent, AtpSessionData, AppBskyFeedDefs } from '@atproto/api';
 import { inspect } from 'util';
 import http from 'http';
 import { IncomingMessage, ServerResponse } from 'http';
@@ -45,21 +45,18 @@ async function main() {
 
 async function getTimelineDisplay(): Promise<string> {
   const { data } = await agent.getTimeline({
-    cursor: '',
     limit: 5,
   });
-
-  const { feed: posts, cursor: nextpage } = data;
+  const { feed: postsArray } = data;
 
   let timelineDisplay = '';
-  for (const item of posts) {
-    timelineDisplay += `<pre> ${logger.inspect(item.post?.record,{ colors: true, depth:6 })}</pre>`; 
+  postsArray.forEach((feedItem) => {
     timelineDisplay += `\n<div>
-      <div><span><img src="${item.post?.author?.avatar}" style="max-width: 50px; max-height: 50px;"/></span>
-      <span>${item.post?.author?.handle}</span>:</div>\n
-      <div><span>${logger.inspect(item.post?.record)}</span></div>\n
+      <div><span><img src="${feedItem.post.author.avatar}" style="max-width: 50px; max-height: 50px;"/></span>
+      <span>${feedItem.post.author.handle}</span>:</div>\n
+      <div><span><pre>${logger.inspect(feedItem.post.record)}</pre></span></div>\n
     </div>\n`;
-  }
+  });
   return timelineDisplay;
 }
 

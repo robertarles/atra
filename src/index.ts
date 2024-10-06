@@ -1,86 +1,90 @@
-import { OAuth2Client } from '@proto/api';
-import { promises as fs } from 'fs';
-import { createServer } from 'http';
-import open from 'open';
-import dotenv from 'dotenv';
+import { AtpAgent, AtpSessionEvent, AtpSessionData } from '@atproto/api';
+import { inspect } from 'util';
+import http from 'http';
+import { IncomingMessage, ServerResponse } from 'http';
 
-dotenv.config();
+import * as logger from './logger';
 
-let CLIENT_ID = process.env.ATRA_CLIENT_ID;
-let CLIENT_SECRET = process.env.ATRA_CLIENT_SECRET;
-const REDIRECT_URI = 'http://localhost:3000/callback';
-const SCOPES = ['openid', 'profile', 'email'];
-
-async function setupOAuthCredentials() {
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    console.log('ATRA_CLIENT_ID or ATRA_CLIENT_SECRET not found in environment variables.');
-    console.log('Please follow these steps to obtain OAuth credentials from at.arles.us:');
-    console.log('1. Go to https://at.arles.us and sign in or create an account');
-    console.log('2. Navigate to the developer settings or OAuth application section');
-    console.log('3. Create a new OAuth application');
-    console.log('4. Set the redirect URI to: http://localhost:3000/callback');
-    console.log('5. Copy the provided Client ID and Client Secret');
-    console.log('6. Set the following environment variables:');
-    console.log('   ATRA_CLIENT_ID=<your_client_id>');
-    console.log('   ATRA_CLIENT_SECRET=<your_client_secret>');
-    console.log('7. Restart this script after setting the environment variables');
-    process.exit(1);
-  }
-}
-
-async function getAccessToken(): Promise<string> {
-  const oauth2Client = new OAuth2Client({
-    clientId: CLIENT_ID!,
-    clientSecret: CLIENT_SECRET!,
-    redirectUri: REDIRECT_URI,
-  });
-
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-
-  console.log('Please visit this URL to authorize the application:', authUrl);
-  await open(authUrl);
-
-  return new Promise((resolve, reject) => {
-    const server = createServer(async (req, res) => {
-      if (!req.url?.startsWith('/callback')) return;
-
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      const code = url.searchParams.get('code');
-
-      if (code) {
-        try {
-          const { tokens } = await oauth2Client.getToken(code);
-          oauth2Client.setCredentials(tokens);
-          res.end('Authentication successful! You can close this window.');
-          server.close();
-          resolve(tokens.access_token as string);
-        } catch (error) {
-          reject(error);
-        }
-      } else {
-        reject(new Error('No code found in the callback URL'));
-      }
-    }).listen(3000);
-  });
-}
-
-async function loginToArles(accessToken: string) {
-  console.log('Logging in to at.arles.us with access token:', accessToken);
-  // Implement the actual login process here
-}
+let agent: AtpAgent;
 
 async function main() {
-  try {
-    await setupOAuthCredentials();
-    const accessToken = await getAccessToken();
-    await loginToArles(accessToken);
-  } catch (error) {
-    console.error('An error occurred:', error);
+
+  // configure connection to the server, without account authentication
+  agent = new AtpAgent({
+    service: 'https://at.arles.us',
+    persistSession: (evt: AtpSessionEvent, sess?: AtpSessionData) => {
+      logger.debug(`evt [${inspect(evt, { colors: true })}]`);
+      logger.debug(`sess [${inspect(sess, { colors: true })}]`);
+      // store the session-data for reuse
+    },
+  });
+
+  // 2) if an existing session was securely stored previously,pr then reuse that to resume the session.
+  //await agent.resumeSession(savedSessionData)
+
+  // 3) if no old session was available, create a new one by logging in with password (App Password)
+  if (process.env.ATRA_USERNAME === undefined || process.env.ATRA_PASSWORD === undefined) {
+    logger.info("Error. ATRA_USERNAME and ATRA_PASSWORD must be set");
+    process.exit(1);
   }
+
+  await agent.login({
+    identifier: process.env.ATRA_USERNAME,
+    password: process.env.ATRA_PASSWORD
+  })
+
+  const server = http.createServer(handleRequest);
+
+  // Listen on port 3000 by default
+  const httpPort = process.env.ATRA_HTTP_PORT || 3000;
+  server.listen(httpPort, () => {
+    logger.info(`HTTP Server running at http://localhost:${httpPort}/`);
+  });
+
 }
 
-main();
+async function getTimelineDisplay(): Promise<string> {
+  const { data } = await agent.getTimeline({
+    cursor: '',
+    limit: 5,
+  });
 
+  const { feed: posts, cursor: nextpage } = data;
+
+  let timelineDisplay = '';
+  for (const item of posts) {
+    timelineDisplay += `<pre> ${logger.inspect(item.post?.record,{ colors: true, depth:6 })}</pre>`; 
+    timelineDisplay += `\n<div>
+      <div><span><img src="${item.post?.author?.avatar}" style="max-width: 50px; max-height: 50px;"/></span>
+      <span>${item.post?.author?.handle}</span>:</div>\n
+      <div><span>${logger.inspect(item.post?.record)}</span></div>\n
+    </div>\n`;
+  }
+  return timelineDisplay;
+}
+
+// Simple route handler
+async function handleRequest(req: IncomingMessage, res: ServerResponse) {
+  const url = req.url;
+  // Use switch case to handle routes
+  switch (url) {
+    case '/':
+      const timelineDisplay = await getTimelineDisplay();
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(`<html><body>atra\n${timelineDisplay}</body></html>`);
+      break;
+
+    case '/message':
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('This is the /message route!\n');
+      break;
+
+    default:
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('404: Route Not Found\n');
+      break;
+  }
+}
+// Create the HTTP server
+
+main();

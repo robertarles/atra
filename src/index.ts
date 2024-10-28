@@ -51,10 +51,26 @@ async function getTimelineDisplay(): Promise<string> {
 
   let timelineDisplay = '';
   postsArray.forEach((feedItem) => {
+    let message = '';
+    if (feedItem.reply?.parent?.uri) {
+      message += `<div>Reply to message: ${feedItem.reply.parent.uri}</div>\n`;
+    }
+    if (feedItem.reply?.parent?.author) {
+      message += `<div>Reply to author: ${feedItem.reply.parent.author}</div>\n`;
+    }
+
+    console.log(require('util').inspect(feedItem));
+    // if (feedItem.post?.record?.reply){
+    //   message += 'Reply: ';
+    // }
+    // if (feedItem.post.record.text) {
+    //   message += feedItem.post.record.text;
+    // }
     timelineDisplay += `\n<div>
       <div><span><img src="${feedItem.post.author.avatar}" style="max-width: 50px; max-height: 50px;"/></span>
-      <span>${feedItem.post.author.handle}</span>:</div>\n
-      <div><span><pre>${logger.inspect(feedItem.post.record)}</pre></span></div>\n
+      <span>HANDLE: ${feedItem.post.author.handle}</span>:</div>\n
+      <div><span>MESSAGE: ${message}</span></div>\n
+      <div><span><pre>DEBUG: ${require('util').inspect(feedItem.post.record)}</pre></span></div>\n
     </div>\n`;
   });
   return timelineDisplay;

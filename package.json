@@ -4,7 +4,8 @@
   "description": "atra is a bsky client that, um.. mphraphrma bing bong. Good Luck!",
   "main": "dist/index.js",
   "scripts": {
-    "build": "node_modules/.bin/tsc --build tsconfig.json";
+    "build": "node_modules/.bin/tsc --build tsconfig.json",
+    "start": "node dist/index.js",
     "test": "mocha test/**/*"
   },
   "repository": {
@@ -18,6 +19,7 @@
   "author": "robert arles",
   "license": "ISC",
   "devDependencies": {
+    "mocha": "^10.7.3",
     "typescript": "^5.5.4"
   },
   "dependencies": {
